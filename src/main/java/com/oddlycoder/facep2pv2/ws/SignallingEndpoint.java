@@ -51,7 +51,9 @@ public class SignallingEndpoint {
             case "call-answer"   -> handleCallAnswer(msg, senderSession);
             case "call-reject"   -> handleCallReject(msg, senderSession);
             case "call-hangup"   -> handleCallHangup(msg, senderSession);
-            case "ice-candidate" -> relay(msg, senderSession);
+            case "ice-candidate",
+                 "screen-share-start",
+                 "screen-share-stop"  -> relay(msg, senderSession);
             default -> senderSession.getBasicRemote()
                 .sendText("{\"type\":\"error\",\"message\":\"Unknown message type\"}");
         }

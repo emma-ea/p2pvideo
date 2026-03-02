@@ -90,6 +90,24 @@
                                     align-items:center;justify-content:center;border-radius:6px;">
                             <i class="pi pi-video-slash" style="font-size:2rem;"/>
                         </div>
+
+                        <!-- Banner shown to the LOCAL user while they are sharing their screen -->
+                        <div id="screenShareBanner"
+                             style="display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);
+                                    background:rgba(0,0,0,0.7);color:#fff;padding:4px 12px;
+                                    border-radius:4px;font-size:0.85rem;white-space:nowrap;">
+                            <i class="pi pi-desktop" style="margin-right:6px;"/>
+                            You are sharing your screen
+                        </div>
+
+                        <!-- Banner shown to the REMOTE user while the peer is sharing their screen -->
+                        <div id="remoteScreenShareBanner"
+                             style="display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);
+                                    background:rgba(30,100,200,0.8);color:#fff;padding:4px 12px;
+                                    border-radius:4px;font-size:0.85rem;white-space:nowrap;">
+                            <i class="pi pi-desktop" style="margin-right:6px;"/>
+                            Peer is sharing their screen
+                        </div>
                     </div>
 
                     <!-- In-call media controls toolbar -->
@@ -105,6 +123,13 @@
                                          icon="pi pi-video"
                                          title="Turn off camera"
                                          onclick="PeerVideo.toggleCamera(); return false;"
+                                         styleClass="ui-button-secondary"/>
+
+                        <p:commandButton id="screenShareBtn"
+                                         icon="pi pi-desktop"
+                                         value="Share Screen"
+                                         title="Share your screen"
+                                         onclick="PeerVideo.toggleScreenShare(); return false;"
                                          styleClass="ui-button-secondary"/>
 
                         <select id="inCallCameraSelect"

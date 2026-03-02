@@ -26,6 +26,10 @@ const PeerVideo = (() => {
     let currentCameraId = null;
     let currentMicId    = null;
 
+    // ── Screen share state ────────────────────────────────────────────────
+    let screenSharing = false;
+    let screenStream  = null;
+
     // ── DOM helpers ───────────────────────────────────────────────────────
     const localVideo  = () => document.getElementById('localVideo');
     const remoteVideo = () => document.getElementById('remoteVideo');
@@ -49,9 +53,11 @@ const PeerVideo = (() => {
                 case 'call-offer':    handleIncomingOffer(msg);  break;
                 case 'call-answer':   handleAnswer(msg);         break;
                 case 'ice-candidate': handleIceCandidate(msg);   break;
-                case 'call-reject':   handleReject(msg);         break;
-                case 'call-hangup':   handleHangup(msg);         break;
-                case 'call-busy':     handleBusy(msg);           break;
+                case 'call-reject':        handleReject(msg);                 break;
+                case 'call-hangup':        handleHangup(msg);                 break;
+                case 'call-busy':          handleBusy(msg);                   break;
+                case 'screen-share-start': handleRemoteScreenShareStart();    break;
+                case 'screen-share-stop':  handleRemoteScreenShareStop();     break;
             }
         };
 
@@ -217,8 +223,133 @@ const PeerVideo = (() => {
         cleanupCall();
     }
 
+    // ── Screen sharing ────────────────────────────────────────────────────
+    async function toggleScreenShare() {
+        if (screenSharing) {
+            await stopScreenShare();
+        } else {
+            await startScreenShare();
+        }
+    }
+
+    async function startScreenShare() {
+        try {
+            screenStream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    frameRate: { ideal: 15, max: 30 },
+                    cursor: 'always'
+                },
+                audio: false
+            });
+        } catch (e) {
+            console.info('Screen share cancelled or denied:', e);
+            return;
+        }
+
+        screenSharing = true;
+        const screenTrack = screenStream.getVideoTracks()[0];
+
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (sender) {
+            await sender.replaceTrack(screenTrack);
+        }
+
+        screenTrack.addEventListener('ended', () => stopScreenShare());
+
+        const target = currentCallee || currentCaller;
+        if (target) send({ type: 'screen-share-start', to: target });
+
+        updateScreenShareUI(true);
+    }
+
+    async function stopScreenShare() {
+        if (!screenSharing) return;
+        screenSharing = false;
+
+        if (screenStream) {
+            screenStream.getTracks().forEach(t => t.stop());
+            screenStream = null;
+        }
+
+        let restoredStream;
+        try {
+            restoredStream = await navigator.mediaDevices.getUserMedia({
+                video: currentCameraId ? { deviceId: { exact: currentCameraId } } : true,
+                audio: false
+            });
+        } catch (e) {
+            console.error('Could not restore camera after screen share:', e);
+            updateScreenShareUI(false);
+            return;
+        }
+
+        const cameraTrack = restoredStream.getVideoTracks()[0];
+
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (sender) {
+            await sender.replaceTrack(cameraTrack);
+        }
+
+        localStream.getVideoTracks().forEach(t => t.stop());
+        localStream.removeTrack(localStream.getVideoTracks()[0]);
+        localStream.addTrack(cameraTrack);
+        if (localVideo()) localVideo().srcObject = localStream;
+
+        cameraTrack.enabled = !videoOff;
+
+        const target = currentCallee || currentCaller;
+        if (target) send({ type: 'screen-share-stop', to: target });
+
+        updateScreenShareUI(false);
+    }
+
+    function updateScreenShareUI(isSharing) {
+        const btn    = document.getElementById('screenShareBtn');
+        const banner = document.getElementById('screenShareBanner');
+
+        if (btn) {
+            btn.querySelector('.ui-icon').className =
+                isSharing ? 'ui-icon pi pi-stop-circle'
+                          : 'ui-icon pi pi-desktop';
+            const label = btn.querySelector('.ui-button-text');
+            if (label) label.textContent = isSharing ? 'Stop Sharing' : 'Share Screen';
+            btn.title = isSharing ? 'Stop sharing your screen' : 'Share your screen';
+            btn.classList.toggle('ui-button-warning',   isSharing);
+            btn.classList.toggle('ui-button-secondary', !isSharing);
+        }
+
+        if (banner) banner.style.display = isSharing ? 'block' : 'none';
+
+        const localVid = document.getElementById('localVideo');
+        if (localVid) localVid.style.display = isSharing ? 'none' : (videoOff ? 'none' : 'block');
+    }
+
+    function handleRemoteScreenShareStart() {
+        const banner = document.getElementById('remoteScreenShareBanner');
+        if (banner) banner.style.display = 'block';
+    }
+
+    function handleRemoteScreenShareStop() {
+        const banner = document.getElementById('remoteScreenShareBanner');
+        if (banner) banner.style.display = 'none';
+    }
+
     // ── Cleanup ───────────────────────────────────────────────────────────
     function cleanupCall() {
+        // Stop screen share if active when the call ends
+        if (screenSharing) {
+            if (screenStream) {
+                screenStream.getTracks().forEach(t => t.stop());
+                screenStream = null;
+            }
+            screenSharing = false;
+            updateScreenShareUI(false);
+        }
+
+        // Hide the remote screen share banner
+        const remoteBanner = document.getElementById('remoteScreenShareBanner');
+        if (remoteBanner) remoteBanner.style.display = 'none';
+
         if (pc) { pc.close(); pc = null; }
         if (localStream) {
             localStream.getTracks().forEach(t => t.stop());
@@ -416,7 +547,8 @@ const PeerVideo = (() => {
         connect, call, acceptCall, rejectCall, hangup,
         toggleMute, toggleCamera,
         switchCamera, switchMicrophone,
-        enumerateDevices
+        enumerateDevices,
+        toggleScreenShare
     };
 
 })();
