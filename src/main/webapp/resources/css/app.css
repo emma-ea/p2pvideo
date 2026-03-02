@@ -156,6 +156,45 @@ body {
     padding-top: .5rem;
 }
 
+/* ── Device Settings Panel ───────────────────────────────────────────── */
+.device-panel {
+    margin-bottom: 1.5rem;
+}
+
+.device-selectors {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+}
+
+.device-select {
+    padding: .35rem .5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    font-size: .9rem;
+    min-width: 180px;
+}
+
+.device-select-inline {
+    max-width: 160px;
+    min-width: 100px;
+}
+
+/* ── In-call Controls ────────────────────────────────────────────────── */
+.call-controls {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .75rem;
+    flex-wrap: wrap;
+}
+
+.hangup-btn {
+    margin-left: auto !important;
+}
+
 /* ── Incoming Call Dialog ────────────────────────────────────────────── */
 .dialog-actions {
     display: flex;

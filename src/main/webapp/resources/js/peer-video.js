@@ -20,6 +20,12 @@ const PeerVideo = (() => {
     let pendingOffer     = null; // stored offer SDP while user decides
     let appContextPath   = '';
 
+    // ── Media control state ───────────────────────────────────────────────
+    let audioMuted      = false;
+    let videoOff        = false;
+    let currentCameraId = null;
+    let currentMicId    = null;
+
     // ── DOM helpers ───────────────────────────────────────────────────────
     const localVideo  = () => document.getElementById('localVideo');
     const remoteVideo = () => document.getElementById('remoteVideo');
@@ -28,8 +34,8 @@ const PeerVideo = (() => {
 
     // ── WebSocket connection ──────────────────────────────────────────────
     function connect(username, contextPath) {
-        currentUsername  = username;
-        appContextPath   = contextPath || '';
+        currentUsername = username;
+        appContextPath  = contextPath || '';
 
         const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
         ws = new WebSocket(`${protocol}://${location.host}${appContextPath}/signal`);
@@ -50,7 +56,6 @@ const PeerVideo = (() => {
         };
 
         ws.onclose = () => {
-            // Reconnect after 3 seconds if connection drops
             setTimeout(() => connect(currentUsername, appContextPath), 3000);
         };
 
@@ -63,6 +68,17 @@ const PeerVideo = (() => {
         }
     }
 
+    // ── Media constraints (respects device selection) ─────────────────────
+    function buildMediaConstraints() {
+        const videoConstraint = currentCameraId
+            ? { deviceId: { exact: currentCameraId } }
+            : true;
+        const audioConstraint = currentMicId
+            ? { deviceId: { exact: currentMicId } }
+            : true;
+        return { video: videoConstraint, audio: audioConstraint };
+    }
+
     // ── Outgoing call ─────────────────────────────────────────────────────
     async function call(calleeUsername) {
         if (pc) {
@@ -72,7 +88,7 @@ const PeerVideo = (() => {
         currentCallee = calleeUsername;
 
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localStream = await navigator.mediaDevices.getUserMedia(buildMediaConstraints());
             localVideo().srcObject = localStream;
 
             pc = createPeerConnection(calleeUsername);
@@ -94,7 +110,6 @@ const PeerVideo = (() => {
     // ── Incoming call ─────────────────────────────────────────────────────
     function handleIncomingOffer(msg) {
         if (pc) {
-            // Already in a call — the server should have sent call-busy, but handle defensively
             send({ type: 'call-reject', from: currentUsername, to: msg.from });
             return;
         }
@@ -107,7 +122,7 @@ const PeerVideo = (() => {
     async function acceptCall() {
         if (typeof PF !== 'undefined') PF('incomingCallDialog').hide();
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localStream = await navigator.mediaDevices.getUserMedia(buildMediaConstraints());
             localVideo().srcObject = localStream;
 
             pc = createPeerConnection(currentCaller);
@@ -176,7 +191,6 @@ const PeerVideo = (() => {
 
     // ── Presence ──────────────────────────────────────────────────────────
     function handlePresence(msg) {
-        // Trigger PrimeFaces AJAX to refresh the server-rendered user list
         if (typeof refreshUserList !== 'undefined') {
             refreshUserList();
         }
@@ -216,13 +230,193 @@ const PeerVideo = (() => {
         currentCallee = null;
         currentCaller = null;
         pendingOffer  = null;
+
+        // Reset media control state
+        audioMuted = false;
+        videoOff   = false;
+
+        const muteBtn   = document.getElementById('muteBtn');
+        const cameraBtn = document.getElementById('cameraBtn');
+        const offBadge  = document.getElementById('cameraOffBadge');
+        const localVid  = localVideo();
+
+        if (muteBtn)   muteBtn.querySelector('.ui-icon').className   = 'ui-icon pi pi-microphone';
+        if (cameraBtn) {
+            cameraBtn.querySelector('.ui-icon').className = 'ui-icon pi pi-video';
+            cameraBtn.classList.remove('ui-button-warning');
+            cameraBtn.classList.add('ui-button-secondary');
+        }
+        if (localVid)  localVid.style.display  = 'block';
+        if (offBadge)  offBadge.style.display  = 'none';
     }
 
     function showVideoArea() {
         if (videoArea()) videoArea().style.display = 'block';
     }
 
+    // ── Device enumeration ────────────────────────────────────────────────
+    async function enumerateDevices() {
+        let devices;
+        try {
+            devices = await navigator.mediaDevices.enumerateDevices();
+        } catch (e) {
+            console.warn('enumerateDevices failed:', e);
+            return;
+        }
+
+        const cameras = devices.filter(d => d.kind === 'videoinput');
+        const mics    = devices.filter(d => d.kind === 'audioinput');
+
+        populateSelect('cameraSelect',       cameras, currentCameraId);
+        populateSelect('micSelect',          mics,    currentMicId);
+        populateSelect('inCallCameraSelect', cameras, currentCameraId);
+        populateSelect('inCallMicSelect',    mics,    currentMicId);
+    }
+
+    function populateSelect(selectId, devices, activeDeviceId) {
+        const el = document.getElementById(selectId);
+        if (!el) return;
+
+        const prev = el.value;
+        el.innerHTML = '';
+
+        devices.forEach((device, i) => {
+            const opt = document.createElement('option');
+            opt.value = device.deviceId;
+            opt.text  = device.label || `Device ${i + 1}`;
+            if (device.deviceId === (activeDeviceId || prev)) opt.selected = true;
+            el.appendChild(opt);
+        });
+    }
+
+    // Re-enumerate when a device is plugged in or removed
+    navigator.mediaDevices.addEventListener('devicechange', enumerateDevices);
+
+    // ── Toggle mute ───────────────────────────────────────────────────────
+    function toggleMute() {
+        if (!localStream) return;
+
+        audioMuted = !audioMuted;
+        localStream.getAudioTracks().forEach(track => { track.enabled = !audioMuted; });
+
+        const btn = document.getElementById('muteBtn');
+        if (btn) {
+            btn.querySelector('.ui-icon').className =
+                audioMuted ? 'ui-icon pi pi-microphone-slash'
+                           : 'ui-icon pi pi-microphone';
+            btn.title = audioMuted ? 'Unmute microphone' : 'Mute microphone';
+        }
+    }
+
+    // ── Toggle camera ─────────────────────────────────────────────────────
+    function toggleCamera() {
+        if (!localStream) return;
+
+        videoOff = !videoOff;
+        localStream.getVideoTracks().forEach(track => { track.enabled = !videoOff; });
+
+        const localVid  = document.getElementById('localVideo');
+        const offBadge  = document.getElementById('cameraOffBadge');
+        if (localVid) localVid.style.display = videoOff ? 'none' : 'block';
+        if (offBadge) offBadge.style.display  = videoOff ? 'flex'  : 'none';
+
+        const btn = document.getElementById('cameraBtn');
+        if (btn) {
+            btn.querySelector('.ui-icon').className =
+                videoOff ? 'ui-icon pi pi-video-slash'
+                         : 'ui-icon pi pi-video';
+            btn.title = videoOff ? 'Turn on camera' : 'Turn off camera';
+            btn.classList.toggle('ui-button-warning',   videoOff);
+            btn.classList.toggle('ui-button-secondary', !videoOff);
+        }
+    }
+
+    // ── Switch camera mid-call ────────────────────────────────────────────
+    async function switchCamera(deviceId) {
+        if (!deviceId) return;
+        currentCameraId = deviceId;
+
+        if (!pc || !localStream) return;
+
+        let newStream;
+        try {
+            newStream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: deviceId } },
+                audio: false
+            });
+        } catch (e) {
+            console.error('Could not switch camera:', e);
+            return;
+        }
+
+        const newVideoTrack = newStream.getVideoTracks()[0];
+
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (sender) await sender.replaceTrack(newVideoTrack);
+
+        localStream.getVideoTracks().forEach(t => t.stop());
+        localStream.removeTrack(localStream.getVideoTracks()[0]);
+        localStream.addTrack(newVideoTrack);
+
+        if (localVideo()) localVideo().srcObject = localStream;
+        newVideoTrack.enabled = !videoOff;
+
+        const cameras = await getCameraList();
+        populateSelect('cameraSelect',       cameras, currentCameraId);
+        populateSelect('inCallCameraSelect', cameras, currentCameraId);
+    }
+
+    // ── Switch microphone mid-call ────────────────────────────────────────
+    async function switchMicrophone(deviceId) {
+        if (!deviceId) return;
+        currentMicId = deviceId;
+
+        if (!pc || !localStream) return;
+
+        let newStream;
+        try {
+            newStream = await navigator.mediaDevices.getUserMedia({
+                audio: { deviceId: { exact: deviceId } },
+                video: false
+            });
+        } catch (e) {
+            console.error('Could not switch microphone:', e);
+            return;
+        }
+
+        const newAudioTrack = newStream.getAudioTracks()[0];
+
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+        if (sender) await sender.replaceTrack(newAudioTrack);
+
+        localStream.getAudioTracks().forEach(t => t.stop());
+        localStream.removeTrack(localStream.getAudioTracks()[0]);
+        localStream.addTrack(newAudioTrack);
+
+        newAudioTrack.enabled = !audioMuted;
+
+        const mics = await getMicList();
+        populateSelect('micSelect',       mics, currentMicId);
+        populateSelect('inCallMicSelect', mics, currentMicId);
+    }
+
+    // ── Device list helpers ───────────────────────────────────────────────
+    async function getCameraList() {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        return devices.filter(d => d.kind === 'videoinput');
+    }
+
+    async function getMicList() {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        return devices.filter(d => d.kind === 'audioinput');
+    }
+
     // ── Public API ────────────────────────────────────────────────────────
-    return { connect, call, acceptCall, rejectCall, hangup };
+    return {
+        connect, call, acceptCall, rejectCall, hangup,
+        toggleMute, toggleCamera,
+        switchCamera, switchMicrophone,
+        enumerateDevices
+    };
 
 })();

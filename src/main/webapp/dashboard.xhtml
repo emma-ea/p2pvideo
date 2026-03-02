@@ -50,21 +50,75 @@
                 </p:dataList>
             </p:panel>
 
+            <!-- Device Settings Panel -->
+            <p:panel header="Device Settings" toggleable="true" collapsed="true"
+                     styleClass="device-panel">
+                <div class="device-selectors">
+
+                    <label for="cameraSelect">Camera</label>
+                    <select id="cameraSelect" onchange="PeerVideo.switchCamera(this.value)"
+                            class="device-select">
+                        <option value="">— select camera —</option>
+                    </select>
+
+                    <label for="micSelect">Microphone</label>
+                    <select id="micSelect" onchange="PeerVideo.switchMicrophone(this.value)"
+                            class="device-select">
+                        <option value="">— select microphone —</option>
+                    </select>
+
+                    <p:commandButton value="Refresh Devices"
+                                     icon="pi pi-refresh"
+                                     onclick="PeerVideo.enumerateDevices(); return false;"
+                                     styleClass="ui-button-secondary"/>
+                </div>
+            </p:panel>
+
             <!-- Video Call Area (hidden until a call is active) -->
             <div id="videoArea" style="display:none;">
                 <p:panel header="Call in Progress" styleClass="video-panel">
                     <div class="video-container">
                         <video id="remoteVideo" autoplay="autoplay" playsinline="true"
                                style="width:100%;max-width:640px;background:#000;border-radius:8px;"/>
-                        <video id="localVideo"  autoplay="autoplay" playsinline="true" muted="true"
+                        <video id="localVideo" autoplay="autoplay" playsinline="true" muted="true"
                                style="width:160px;position:absolute;bottom:10px;right:10px;
                                       background:#333;border-radius:6px;border:2px solid #fff;"/>
+                        <!-- Shown in place of localVideo when camera is off -->
+                        <div id="cameraOffBadge"
+                             style="display:none;position:absolute;bottom:10px;right:10px;
+                                    width:160px;height:90px;background:#222;color:#fff;
+                                    align-items:center;justify-content:center;border-radius:6px;">
+                            <i class="pi pi-video-slash" style="font-size:2rem;"/>
+                        </div>
                     </div>
-                    <div class="video-controls">
+
+                    <!-- In-call media controls toolbar -->
+                    <div class="call-controls">
+
+                        <p:commandButton id="muteBtn"
+                                         icon="pi pi-microphone"
+                                         title="Mute microphone"
+                                         onclick="PeerVideo.toggleMute(); return false;"
+                                         styleClass="ui-button-secondary"/>
+
+                        <p:commandButton id="cameraBtn"
+                                         icon="pi pi-video"
+                                         title="Turn off camera"
+                                         onclick="PeerVideo.toggleCamera(); return false;"
+                                         styleClass="ui-button-secondary"/>
+
+                        <select id="inCallCameraSelect"
+                                onchange="PeerVideo.switchCamera(this.value)"
+                                class="device-select device-select-inline"/>
+
+                        <select id="inCallMicSelect"
+                                onchange="PeerVideo.switchMicrophone(this.value)"
+                                class="device-select device-select-inline"/>
+
                         <p:commandButton value="Hang Up"
                                          icon="pi pi-phone"
                                          onclick="PeerVideo.hangup(); return false;"
-                                         styleClass="ui-button-danger"/>
+                                         styleClass="ui-button-danger hangup-btn"/>
                     </div>
                 </p:panel>
             </div>
@@ -91,9 +145,16 @@
 
         </h:form>
 
-        <!-- Initialise WebRTC after page load -->
+        <!-- Initialise WebRTC, then request a brief permission grant so
+             device labels are available when the device panel is opened -->
         <h:outputScript target="body">
             PeerVideo.connect('#{dashboardBean.currentUser.username}', '#{request.contextPath}');
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(stream => {
+                    stream.getTracks().forEach(t => t.stop());
+                    PeerVideo.enumerateDevices();
+                })
+                .catch(() => PeerVideo.enumerateDevices());
         </h:outputScript>
     </ui:define>
 
