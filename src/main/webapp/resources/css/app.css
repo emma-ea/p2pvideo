@@ -1,0 +1,181 @@
+/* ── Global Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f4f6f9;
+    color: #333;
+}
+
+/* ── App Wrapper ─────────────────────────────────────────────────────── */
+.app-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ── Navigation Bar ──────────────────────────────────────────────────── */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 0 1.5rem;
+    height: 56px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+
+.navbar-brand {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    color: #7ec8e3;
+}
+
+.navbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-link {
+    color: #ccc;
+    text-decoration: none;
+    font-size: .9rem;
+    transition: color .2s;
+}
+
+.nav-link:hover {
+    color: #fff;
+}
+
+.nav-logout .ui-button {
+    margin: 0;
+}
+
+/* ── Page Content ────────────────────────────────────────────────────── */
+.page-content {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* ── Auth Pages ──────────────────────────────────────────────────────── */
+.auth-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 3rem;
+}
+
+.auth-panel {
+    width: 100%;
+    max-width: 420px;
+}
+
+.auth-footer {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: .9rem;
+    color: #666;
+}
+
+/* ── Form Fields ─────────────────────────────────────────────────────── */
+.form-field {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+}
+
+.form-actions {
+    margin-top: 1.2rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.full-width {
+    width: 100% !important;
+}
+
+/* ── Dashboard ───────────────────────────────────────────────────────── */
+.users-panel {
+    margin-bottom: 1.5rem;
+}
+
+.user-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.user-row:last-child {
+    border-bottom: none;
+}
+
+.user-avatar {
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.username {
+    flex: 1;
+    font-weight: 500;
+}
+
+.call-btn {
+    margin-left: auto;
+}
+
+/* ── Video Area ──────────────────────────────────────────────────────── */
+.video-panel {
+    margin-bottom: 1.5rem;
+}
+
+.video-container {
+    position: relative;
+    background: #111;
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 240px;
+    margin-bottom: 1rem;
+}
+
+.video-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding-top: .5rem;
+}
+
+/* ── Incoming Call Dialog ────────────────────────────────────────────── */
+.dialog-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: .5rem;
+}
+
+/* ── History Table ───────────────────────────────────────────────────── */
+.history-panel {
+    width: 100%;
+}
+
+/* ── Profile Page ────────────────────────────────────────────────────── */
+.profile-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.profile-panel {
+    width: 100%;
+    max-width: 560px;
+}

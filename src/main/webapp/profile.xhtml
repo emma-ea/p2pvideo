@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="jakarta.faces.facelets">
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Profile</ui:define>
+
+    <ui:define name="content">
+        <div class="profile-wrapper">
+            <p:panel header="My Profile" styleClass="profile-panel">
+                <h:form id="profileForm">
+                    <p:messages id="msgs" showDetail="true" closable="true"/>
+
+                    <div class="form-field">
+                        <p:outputLabel value="Username"/>
+                        <p:inputText value="#{profileBean.currentUser.username}"
+                                     readonly="true"
+                                     styleClass="full-width"/>
+                    </div>
+
+                    <div class="form-field">
+                        <p:outputLabel value="Email"/>
+                        <p:inputText value="#{profileBean.currentUser.email}"
+                                     readonly="true"
+                                     styleClass="full-width"/>
+                    </div>
+
+                    <div class="form-field">
+                        <p:outputLabel for="displayName" value="Display Name"/>
+                        <p:inputText id="displayName"
+                                     value="#{profileBean.displayName}"
+                                     maxlength="100"
+                                     styleClass="full-width"
+                                     placeholder="#{profileBean.currentUser.username}"/>
+                    </div>
+
+                    <div class="form-field">
+                        <p:outputLabel for="avatarUrl" value="Avatar URL"/>
+                        <p:inputText id="avatarUrl"
+                                     value="#{profileBean.avatarUrl}"
+                                     maxlength="255"
+                                     styleClass="full-width"
+                                     placeholder="https://example.com/avatar.png"/>
+                    </div>
+
+                    <div class="form-actions">
+                        <p:commandButton value="Save"
+                                         actionListener="#{profileBean.saveProfile}"
+                                         update="msgs profileForm"
+                                         styleClass="ui-button-primary"
+                                         icon="pi pi-save"/>
+                    </div>
+                </h:form>
+            </p:panel>
+        </div>
+    </ui:define>
+
+</ui:composition>
+</html>

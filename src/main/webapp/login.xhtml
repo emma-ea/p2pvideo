@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="jakarta.faces.facelets">
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Sign In</ui:define>
+
+    <ui:define name="content">
+        <div class="auth-wrapper">
+            <p:panel header="Sign In" styleClass="auth-panel">
+                <h:form id="loginForm">
+                    <p:messages id="msgs" showDetail="true" closable="true"/>
+
+                    <div class="form-field">
+                        <p:outputLabel for="username" value="Username"/>
+                        <p:inputText id="username"
+                                     value="#{authBean.username}"
+                                     required="true"
+                                     requiredMessage="Username is required"
+                                     styleClass="full-width"/>
+                    </div>
+
+                    <div class="form-field">
+                        <p:outputLabel for="password" value="Password"/>
+                        <p:password id="password"
+                                    value="#{authBean.password}"
+                                    required="true"
+                                    requiredMessage="Password is required"
+                                    feedback="false"
+                                    styleClass="full-width"/>
+                    </div>
+
+                    <div class="form-actions">
+                        <p:commandButton value="Sign In"
+                                         action="#{authBean.login}"
+                                         update="msgs"
+                                         styleClass="ui-button-primary"
+                                         icon="pi pi-sign-in"/>
+                    </div>
+
+                    <div class="auth-footer">
+                        <span>Don't have an account? </span>
+                        <h:link value="Create one" outcome="/register.xhtml"/>
+                    </div>
+                </h:form>
+            </p:panel>
+        </div>
+    </ui:define>
+
+</ui:composition>
+</html>

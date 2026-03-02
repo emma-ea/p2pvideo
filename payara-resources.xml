@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  payara-resources.xml
+  ─────────────────────────────────────────────────────────────────────────
+  Payara Micro automatically processes this file when it is placed in the
+  WAR under WEB-INF/payara-resources.xml, OR when passed via the
+  pre-boot commands file.
+
+  Place this file at:  src/main/webapp/WEB-INF/payara-resources.xml
+  Payara Micro will pick it up automatically from inside the WAR.
+  ─────────────────────────────────────────────────────────────────────────
+-->
+<!DOCTYPE resources PUBLIC
+    "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions//EN"
+    "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+
+<resources>
+
+  <!-- JDBC Connection Pool -->
+  <jdbc-connection-pool
+      name="p2pVideoPool"
+      res-type="javax.sql.DataSource"
+      datasource-classname="org.postgresql.ds.PGSimpleDataSource"
+      is-isolation-level-guaranteed="false">
+
+    <!-- These values are injected from environment variables at runtime.
+         Payara Micro supports ${ENV=VAR_NAME} syntax in this file. -->
+    <property name="serverName"   value="${ENV=DB_HOST}"/>
+    <property name="portNumber"   value="${ENV=DB_PORT}"/>
+    <property name="databaseName" value="${ENV=DB_NAME}"/>
+    <property name="user"         value="${ENV=DB_USER}"/>
+    <property name="password"     value="${ENV=DB_PASSWORD}"/>
+
+    <!-- Connection pool sizing -->
+    <property name="initialPoolSize" value="5"/>
+    <property name="minPoolSize"     value="5"/>
+    <property name="maxPoolSize"     value="25"/>
+
+  </jdbc-connection-pool>
+
+  <!-- JDBC Resource — must match the jta-data-source in persistence.xml -->
+  <jdbc-resource
+      pool-name="p2pVideoPool"
+      jndi-name="java:app/jdbc/p2pVideoDS"/>
+
+</resources>

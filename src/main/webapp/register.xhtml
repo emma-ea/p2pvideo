@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Register</ui:define>
+
+    <ui:define name="content">
+        <div class="auth-wrapper">
+            <p:panel header="Create Account" styleClass="auth-panel">
+                <h:form id="registerForm">
+                    <p:messages id="msgs" showDetail="true" closable="true"/>
+
+                    <div class="form-field">
+                        <p:outputLabel for="username" value="Username"/>
+                        <p:inputText id="username"
+                                     value="#{authBean.username}"
+                                     required="true"
+                                     requiredMessage="Username is required"
+                                     styleClass="full-width">
+                            <f:validateLength minimum="3" maximum="50"/>
+                        </p:inputText>
+                        <p:message for="username"/>
+                    </div>
+
+                    <div class="form-field">
+                        <p:outputLabel for="email" value="Email"/>
+                        <p:inputText id="email"
+                                     value="#{authBean.email}"
+                                     required="true"
+                                     requiredMessage="Email is required"
+                                     styleClass="full-width">
+                            <f:validateRegex pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$"/>
+                        </p:inputText>
+                        <p:message for="email"/>
+                    </div>
+
+                    <div class="form-field">
+                        <p:outputLabel for="password" value="Password"/>
+                        <p:password id="password"
+                                    value="#{authBean.password}"
+                                    required="true"
+                                    requiredMessage="Password is required"
+                                    feedback="true"
+                                    styleClass="full-width">
+                            <f:validateLength minimum="8"/>
+                        </p:password>
+                        <p:message for="password"/>
+                    </div>
+
+                    <div class="form-actions">
+                        <p:commandButton value="Register"
+                                         action="#{authBean.register}"
+                                         update="msgs registerForm"
+                                         styleClass="ui-button-primary"
+                                         icon="pi pi-user-plus"/>
+                    </div>
+
+                    <div class="auth-footer">
+                        <span>Already have an account? </span>
+                        <h:link value="Sign in" outcome="/login.xhtml"/>
+                    </div>
+                </h:form>
+            </p:panel>
+        </div>
+    </ui:define>
+
+</ui:composition>
+</html>

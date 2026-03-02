@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.1">
+    <persistence-unit name="p2pvideoPU" transaction-type="JTA">
+        <jta-data-source>java:app/jdbc/p2pVideoDS</jta-data-source>
+        <class>com.oddlycoder.facep2pv2.entity.User</class>
+        <class>com.oddlycoder.facep2pv2.entity.CallRecord</class>
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+        <properties>
+            <property name="jakarta.persistence.schema-generation.database.action" value="drop-and-create"/>
+            <property name="eclipselink.logging.level" value="FINE"/>
+        </properties>
+    </persistence-unit>
+</persistence>

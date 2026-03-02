@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Call History</ui:define>
+
+    <ui:define name="content">
+        <p:panel header="Recent Calls" styleClass="history-panel">
+            <p:dataTable value="#{callHistoryBean.recentCalls}"
+                         var="call"
+                         paginator="true"
+                         rows="10"
+                         emptyMessage="No calls yet."
+                         styleClass="call-history-table">
+
+                <p:column headerText="With">
+                    <h:outputText value="#{call.caller.username == callHistoryBean.currentUser.username
+                                          ? call.callee.username
+                                          : call.caller.username}"/>
+                </p:column>
+
+                <p:column headerText="Direction">
+                    <p:badge value="#{call.caller.username == callHistoryBean.currentUser.username ? 'Outgoing' : 'Incoming'}"
+                             severity="#{call.caller.username == callHistoryBean.currentUser.username ? 'info' : 'warning'}"/>
+                </p:column>
+
+                <p:column headerText="When">
+                    <h:outputText value="#{call.startedAt}">
+                        <f:convertDateTime pattern="dd MMM yyyy HH:mm" timeZone="UTC"/>
+                    </h:outputText>
+                </p:column>
+
+                <p:column headerText="Duration">
+                    <h:outputText value="#{callHistoryBean.formatDuration(call)}"/>
+                </p:column>
+
+                <p:column headerText="Outcome">
+                    <p:badge value="#{call.outcome}"
+                             severity="#{call.outcome == 'COMPLETED' ? 'success' : 'danger'}"/>
+                </p:column>
+
+            </p:dataTable>
+        </p:panel>
+    </ui:define>
+
+</ui:composition>
+</html>

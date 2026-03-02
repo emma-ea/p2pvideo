@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<ui:composition template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Dashboard</ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet library="primeicons" name="primeicons.css"/>
+        <h:outputScript library="js" name="peer-video.js"/>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="dashForm">
+
+            <!-- Remote command triggered by WebSocket presence events -->
+            <p:remoteCommand name="refreshUserList"
+                             actionListener="#{dashboardBean.refreshOnlineUsers}"
+                             update="dashForm:usersPanel"
+                             global="false"/>
+
+            <!-- Online Users Panel -->
+            <p:panel id="usersPanel" header="Online Users" styleClass="users-panel">
+                <p:dataList id="userList"
+                            value="#{dashboardBean.onlineUsers}"
+                            var="user"
+                            emptyMessage="No other users are online right now.">
+                    <div class="user-row">
+                        <p:graphicImage value="#{user.avatarUrl}"
+                                        width="40" height="40"
+                                        styleClass="user-avatar"
+                                        rendered="#{not empty user.avatarUrl}"/>
+                        <span class="ui-icon pi pi-user user-avatar-placeholder"
+                              style="font-size:2rem;"
+                              rendered="#{empty user.avatarUrl}"/>
+                        <span class="username">
+                            #{not empty user.displayName ? user.displayName : user.username}
+                        </span>
+                        <p:badge value="#{user.status}"
+                                 severity="#{user.status == 'ONLINE' ? 'success' : 'warning'}"/>
+                        <p:commandButton value="Call"
+                                         icon="pi pi-video"
+                                         onclick="PeerVideo.call('#{user.username}'); return false;"
+                                         rendered="#{user.status == 'ONLINE'}"
+                                         styleClass="ui-button-success call-btn"/>
+                    </div>
+                </p:dataList>
+            </p:panel>
+
+            <!-- Video Call Area (hidden until a call is active) -->
+            <div id="videoArea" style="display:none;">
+                <p:panel header="Call in Progress" styleClass="video-panel">
+                    <div class="video-container">
+                        <video id="remoteVideo" autoplay="autoplay" playsinline="true"
+                               style="width:100%;max-width:640px;background:#000;border-radius:8px;"/>
+                        <video id="localVideo"  autoplay="autoplay" playsinline="true" muted="true"
+                               style="width:160px;position:absolute;bottom:10px;right:10px;
+                                      background:#333;border-radius:6px;border:2px solid #fff;"/>
+                    </div>
+                    <div class="video-controls">
+                        <p:commandButton value="Hang Up"
+                                         icon="pi pi-phone"
+                                         onclick="PeerVideo.hangup(); return false;"
+                                         styleClass="ui-button-danger"/>
+                    </div>
+                </p:panel>
+            </div>
+
+            <!-- Incoming Call Dialog -->
+            <p:dialog id="incomingDialog"
+                      header="Incoming Call"
+                      widgetVar="incomingCallDialog"
+                      modal="true"
+                      closable="false"
+                      styleClass="incoming-dialog">
+                <p id="callerLabel" style="font-size:1.1rem;margin-bottom:1rem;"></p>
+                <div class="dialog-actions">
+                    <p:commandButton value="Accept"
+                                     icon="pi pi-check"
+                                     onclick="PeerVideo.acceptCall(); return false;"
+                                     styleClass="ui-button-success"/>
+                    <p:commandButton value="Reject"
+                                     icon="pi pi-times"
+                                     onclick="PeerVideo.rejectCall(); return false;"
+                                     styleClass="ui-button-danger"/>
+                </div>
+            </p:dialog>
+
+        </h:form>
+
+        <!-- Initialise WebRTC after page load -->
+        <h:outputScript target="body">
+            PeerVideo.connect('#{dashboardBean.currentUser.username}', '#{request.contextPath}');
+        </h:outputScript>
+    </ui:define>
+
+</ui:composition>
+</html>

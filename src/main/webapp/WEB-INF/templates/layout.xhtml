@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>FaceP2P — <ui:insert name="title">Video Platform</ui:insert></title>
+    <h:outputStylesheet library="css" name="app.css"/>
+    <ui:insert name="head"/>
+</h:head>
+<h:body>
+
+    <div class="app-wrapper">
+
+        <!-- Navigation Bar -->
+        <div class="navbar">
+            <div class="navbar-brand">FaceP2P</div>
+            <div class="navbar-nav" rendered="#{not empty sessionScope.currentUser}">
+                <h:link value="Dashboard" outcome="/dashboard.xhtml" styleClass="nav-link"/>
+                <h:link value="History"   outcome="/history.xhtml"   styleClass="nav-link"/>
+                <h:link value="Profile"   outcome="/profile.xhtml"   styleClass="nav-link"/>
+                <h:form styleClass="nav-logout">
+                    <p:commandButton value="Logout"
+                                     action="#{authBean.logout}"
+                                     styleClass="ui-button-secondary ui-button-sm"
+                                     ajax="false"/>
+                </h:form>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            <ui:insert name="content"/>
+        </div>
+
+    </div>
+
+</h:body>
+</html>
