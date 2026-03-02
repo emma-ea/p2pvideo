@@ -1,4 +1,4 @@
-package com.oddlycoder.facep2pv2.bean;
+package com.oddlycoder.facep2pv2.controller;
 
 import com.oddlycoder.facep2pv2.entity.CallRecord;
 import com.oddlycoder.facep2pv2.entity.User;
